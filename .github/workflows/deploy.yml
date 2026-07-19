@@ -30,9 +30,6 @@ jobs:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        # Mapeamento de arquivos locais para o servidor:
-        # Se você quiser enviar o projeto inteiro (incluindo o dist e o backend)
         local-dir: ./ 
-        # O caminho dentro da HostGator onde o FTP aponta (geralmente public_html/)
-        server-dir: public_html/ 
+        server-dir: ./
         dangerous-clean-html: false
