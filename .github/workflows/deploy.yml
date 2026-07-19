@@ -3,11 +3,11 @@ name: Deploy Mercado Express via FTP
 on:
   push:
     branches:
-      - main  # Executa o deploy sempre que houver push na branch main
+      - main
 
 jobs:
   web-deploy:
-    name: 🎉 Deploy
+    name: 🎉 Build & Deploy
     runs-on: ubuntu-latest
     steps:
     - name: 🚚 Get latest code
@@ -24,12 +24,22 @@ jobs:
         npm install
         npm run build
 
-    - name: 📂 Sync Files via FTP
+    - name: 📤 Enviar FRONTEND (Pasta dist) para a Raiz
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./ 
-        server-dir: ./
+        local-dir: ./frontend/dist/  # 👈 Envia só o resultado final do front
+        server-dir: ./              # 👈 Joga direto na raiz (/mercado-express)
+        dangerous-clean-html: false
+
+    - name: 📤 Enviar BACKEND para subpasta /backend
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./backend/       # 👈 Envia a pasta do PHP
+        server-dir: ./backend/      # 👈 Cria e joga na pasta /mercado-express/backend
         dangerous-clean-html: false
