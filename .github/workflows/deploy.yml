@@ -35,5 +35,4 @@ jobs:
         local-dir: ./ 
         # O caminho dentro da HostGator onde o FTP aponta (geralmente public_html/)
         server-dir: public_html/ 
-        # Evita deletar arquivos que já estão no servidor e não estão no git
         dangerous-clean-html: false
