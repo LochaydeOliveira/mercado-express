@@ -16,7 +16,10 @@ function figmaAssetResolver() {
   }
 }
 
+
 export default defineConfig({
+  base: './', // 👈 ADICIONE ESSA LINHA BEM AQUI! (não esqueça da vírgula no final)
+
   plugins: [
     figmaAssetResolver(),
     // The React and Tailwind plugins are both required for Make, even if
