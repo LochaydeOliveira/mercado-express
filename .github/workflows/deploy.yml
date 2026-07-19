@@ -1,0 +1,39 @@
+name: Deploy Mercado Express via FTP
+
+on:
+  push:
+    branches:
+      - main  # Executa o deploy sempre que houver push na branch main
+
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: 🚚 Get latest code
+      uses: actions/checkout@v4
+
+    - name: 🚀 Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: 📦 Install dependencies & Build Frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+
+    - name: 📂 Sync Files via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        # Mapeamento de arquivos locais para o servidor:
+        # Se você quiser enviar o projeto inteiro (incluindo o dist e o backend)
+        local-dir: ./ 
+        # O caminho dentro da HostGator onde o FTP aponta (geralmente public_html/)
+        server-dir: public_html/ 
+        # Evita deletar arquivos que já estão no servidor e não estão no git
+        dangerous-clean-html: false
