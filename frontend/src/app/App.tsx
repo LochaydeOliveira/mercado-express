@@ -403,7 +403,11 @@ function SideMenu({
             {/* Footer */}
             <div className="p-4 border-t border-sidebar-border">
               <button
-                onClick={() => { onNav("login" as Screen); onClose(); }}
+                onClick={() => { 
+                  localStorage.removeItem("user_session"); 
+                  onNav("login" as Screen); 
+                  onClose(); 
+                }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors active:scale-95"
               >
                 <LogOut className="w-5 h-5" />
@@ -424,15 +428,49 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [pass, setPass] = useState("");
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(""); // Para exibir mensagens de erro na tela
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    if (!email.trim() || !pass.trim()) {
+      setErrorMsg("Por favor, preencha todos os campos.");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => { setLoading(false); onLogin(); }, 1000);
+    setErrorMsg("");
+
+    try {
+      // Faz a chamada real para o seu servidor na HostGator
+      const response = await fetch("https://loxaid.com/mercado-express/backend/login.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          usuario: email, // ajuste para 'email' se o PHP esperar esse nome
+          senha: pass     // ajuste para 'password' se o PHP esperar esse nome
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success || data.status === "success") {
+        // Salva o token ou estado no navegador para o Logout funcionar de verdade
+        localStorage.setItem("user_session", "active");
+        onLogin();
+      } else {
+        setErrorMsg(data.message || "Usuário ou senha incorretos.");
+      }
+    } catch (error) {
+      console.error("Erro no login:", error);
+      setErrorMsg("Erro ao conectar com o servidor.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-12">
-      {/* Background gradient orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -left-40 w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
@@ -444,7 +482,6 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
         transition={{ duration: 0.5 }}
         className="w-full max-w-sm relative"
       >
-        {/* Logo */}
         <div className="flex flex-col items-center mb-10">
           <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center shadow-lg shadow-primary/30 mb-4">
             <ShoppingCart className="w-10 h-10 text-white" />
@@ -453,8 +490,15 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <p className="text-muted-foreground text-sm mt-1">Consulta de preços rápida</p>
         </div>
 
-        {/* Card */}
         <div className="bg-card rounded-3xl p-6 border border-border space-y-4">
+          {/* Caixa de Erro Visível */}
+          {errorMsg && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
           <div>
             <label className="text-sm font-medium text-muted-foreground block mb-2">Usuário</label>
             <input
@@ -476,7 +520,6 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             />
           </div>
 
-          {/* Remember */}
           <button
             onClick={() => setRemember(!remember)}
             className="flex items-center gap-3 w-full py-1 active:scale-95 transition-transform"
@@ -1219,7 +1262,14 @@ function DesktopSidebar({ current, onNav }: { current: Screen; onNav: (s: Screen
             <p className="font-semibold text-sm truncate">João Silva</p>
             <p className="text-muted-foreground text-xs">Funcionário</p>
           </div>
-          <button className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors text-muted-foreground hover:text-red-400">
+          {/* BOTÃO CORRIGIDO AQUI EMBAIXO: */}
+          <button 
+            onClick={() => {
+              localStorage.removeItem("user_session"); // Limpa a sessão do navegador
+              onNav("login");                          // Redireciona para a tela de login
+            }}
+            className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors text-muted-foreground hover:text-red-400"
+          >
             <LogOut className="w-4 h-4" />
           </button>
         </div>
