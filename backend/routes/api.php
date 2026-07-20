@@ -11,7 +11,7 @@ $router->prefix('/api/v1');
 */
 
 $router->post(
-    '/login',
+    '/login/',
     [AuthController::class, 'login']
 );
 

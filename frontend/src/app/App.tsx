@@ -441,7 +441,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
     try {
       // Ajustado para o caminho dinâmico que bate certinho nas rotas do Router PHP
-      const url = `${window.location.origin}/mercado-express/backend/api/v1/login`;
+      const url = `${window.location.origin}/mercado-express/backend/api/v1/login/`;
 
       const response = await fetch(url, {
         method: "POST",
