@@ -1,57 +1,76 @@
 <?php
 
+// 1. Carrega o autoloader nativo do projeto (procura classes nas pastas automaticamente)
 require_once __DIR__ . '/../autoload.php';
 
+// 2. Inicializa o roteador
 $router = new Router();
 
-/*
-|--------------------------------------------------------------------------
-| Autenticação (Suporta com e sem /api/v1)
-|--------------------------------------------------------------------------
-*/
-
-$router->post('/login', [AuthController::class, 'login']);
-$router->post('/login/', [AuthController::class, 'login']);
-$router->post('/api/v1/login', [AuthController::class, 'login']);
-$router->post('/api/v1/login/', [AuthController::class, 'login']);
-
-$router->post('/logout', [AuthController::class, 'logout']);
-$router->post('/api/v1/logout', [AuthController::class, 'logout']);
+// Define o prefixo padronizado para as rotas da versão 1
+$router->prefix('/api/v1');
 
 /*
 |--------------------------------------------------------------------------
-| Produtos (Suporta com e sem /api/v1 e com caminho do arquivo api.php)
+| Autenticação
 |--------------------------------------------------------------------------
 */
 
-$router->get('/produtos/buscar', [ProductController::class, 'search']);
-$router->get('/api/v1/produtos/buscar', [ProductController::class, 'search']);
+$router->post(
+    '/login',
+    [AuthController::class, 'login']
+);
 
-$router->get('/produtos', [ProductController::class, 'index']);
-$router->get('/api/v1/produtos', [ProductController::class, 'index']);
+$router->post(
+    '/login/',
+    [AuthController::class, 'login']
+);
 
-$router->get('/produtos/{id}', [ProductController::class, 'show']);
-$router->get('/api/v1/produtos/{id}', [ProductController::class, 'show']);
+$router->post(
+    '/logout',
+    [AuthController::class, 'logout']
+);
 
-// POST Produtos - Variações de caminho aceitas pelo servidor
-$router->post('/produtos', [ProductController::class, 'store']);
-$router->post('/produtos/', [ProductController::class, 'store']);
-$router->post('/api/v1/produtos', [ProductController::class, 'store']);
-$router->post('/api/v1/produtos/', [ProductController::class, 'store']);
+/*
+|--------------------------------------------------------------------------
+| Produtos
+|--------------------------------------------------------------------------
+*/
 
-// Caminhos diretos via arquivo api.php
-$router->post('/routes/api.php/produtos', [ProductController::class, 'store']);
-$router->post('/routes/api.php/produtos/', [ProductController::class, 'store']);
-$router->post('/backend/routes/api.php/produtos', [ProductController::class, 'store']);
-$router->post('/backend/routes/api.php/produtos/', [ProductController::class, 'store']);
-$router->post('/mercado-express/backend/routes/api.php/produtos', [ProductController::class, 'store']);
+// Busca estática primeiro para evitar conflito com rotas dinâmicas como /produtos/{id}
+$router->get(
+    '/produtos/buscar',
+    [ProductController::class, 'search']
+);
 
-// PUT e DELETE Produtos
-$router->put('/produtos/{id}', [ProductController::class, 'update']);
-$router->put('/api/v1/produtos/{id}', [ProductController::class, 'update']);
+$router->get(
+    '/produtos',
+    [ProductController::class, 'index']
+);
 
-$router->delete('/produtos/{id}', [ProductController::class, 'destroy']);
-$router->delete('/api/v1/produtos/{id}', [ProductController::class, 'destroy']);
+$router->get(
+    '/produtos/{id}',
+    [ProductController::class, 'show']
+);
+
+$router->post(
+    '/produtos',
+    [ProductController::class, 'store']
+);
+
+$router->post(
+    '/produtos/',
+    [ProductController::class, 'store']
+);
+
+$router->put(
+    '/produtos/{id}',
+    [ProductController::class, 'update']
+);
+
+$router->delete(
+    '/produtos/{id}',
+    [ProductController::class, 'destroy']
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -59,10 +78,15 @@ $router->delete('/api/v1/produtos/{id}', [ProductController::class, 'destroy']);
 |--------------------------------------------------------------------------
 */
 
-$router->get('/notificacoes', [NotificationController::class, 'index']);
-$router->get('/api/v1/notificacoes', [NotificationController::class, 'index']);
+$router->get(
+    '/notificacoes',
+    [NotificationController::class, 'index']
+);
 
-$router->post('/notificacoes/lida', [NotificationController::class, 'read']);
-$router->post('/api/v1/notificacoes/lida', [NotificationController::class, 'read']);
+$router->post(
+    '/notificacoes/lida',
+    [NotificationController::class, 'read']
+);
 
+// 3. Executa o roteamento da requisição
 $router->dispatch();

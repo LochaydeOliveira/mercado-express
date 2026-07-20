@@ -1,7 +1,9 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
 const BASE_DOMAIN = window.location.origin;
-const API_URL = `${BASE_DOMAIN}/mercado-express/backend/routes/api.php`;
+
+// Aponta para a API versionada sem incluir o nome do arquivo .php na URL
+const API_URL = `${BASE_DOMAIN}/mercado-express/backend/api/v1`;
 
 export const api = axios.create({
   baseURL: API_URL,
