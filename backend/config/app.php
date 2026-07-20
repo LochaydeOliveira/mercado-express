@@ -24,17 +24,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 mb_internal_encoding('UTF-8');
 
-// Melhora a segurança do cookie de sessão que será enviado ao React
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_only_cookies', 1);
-ini_set('session.cookie_samesite', 'Lax'); // Permite envio de cookies entre domínios relacionados de forma segura
-
+// Ajustado para evitar bloqueios de diretiva em servidores compartilhados
 session_name('mercadoexpress');
 session_start();
 
 error_reporting(E_ALL);
+ini_set('display_errors', '1');
 
-ini_set(
-    'display_errors',
-    Env::get('APP_DEBUG') === 'true' ? '1' : '0'
-);
+// --- CARREGAMENTO MANUAL DE CLASSES BASE (Evita Erro 500 na HostGator) ---
+// Nota: Se algum destes arquivos estiver em subpastas diferentes (ex: /src/ ou /helpers/), 
+// ajuste o caminho do require correspondente.
+if (file_exists(__DIR__ . '/database.php')) require_once __DIR__ . '/database.php';
+if (file_exists(__DIR__ . '/../models/BaseModel.php')) require_once __DIR__ . '/../models/BaseModel.php';
+if (file_exists(__DIR__ . '/../Models/BaseModel.php')) require_once __DIR__ . '/../Models/BaseModel.php';
+
+if (file_exists(__DIR__ . '/../controllers/BaseController.php')) require_once __DIR__ . '/../controllers/BaseController.php';
+if (file_exists(__DIR__ . '/../Controllers/BaseController.php')) require_once __DIR__ . '/../Controllers/BaseController.php';
+
+if (file_exists(__DIR__ . '/../helpers/Validator.php')) require_once __DIR__ . '/../helpers/Validator.php';
+if (file_exists(__DIR__ . '/../helpers/Security.php')) require_once __DIR__ . '/../helpers/Security.php';
+if (file_exists(__DIR__ . '/../utils/Validator.php')) require_once __DIR__ . '/../utils/Validator.php';
+if (file_exists(__DIR__ . '/../utils/Security.php')) require_once __DIR__ . '/../utils/Security.php';

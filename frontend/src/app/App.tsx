@@ -428,7 +428,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [pass, setPass] = useState("");
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(""); // Para exibir mensagens de erro na tela
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleLogin = async () => {
     if (!email.trim() || !pass.trim()) {
@@ -440,7 +440,6 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
     setErrorMsg("");
 
     try {
-      // Ajustado para o caminho dinâmico que bate certinho nas rotas do Router PHP
       const url = `${window.location.origin}/mercado-express/backend/api/v1/login/`;
 
       const response = await fetch(url, {
@@ -454,14 +453,16 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
         }),
       });
 
-      const data = await response.json();
+      const resBody = await response.json();
 
-      if (data.success || data.status === "success") {
-        // Salva o token ou estado no navegador para o Logout funcionar de verdade
+      if (resBody.success === true) {
         localStorage.setItem("user_session", "active");
+        if (resBody.data && resBody.data.csrf_token) {
+          localStorage.setItem("csrf_token", resBody.data.csrf_token);
+        }
         onLogin();
       } else {
-        setErrorMsg(data.message || "Usuário ou senha incorretos.");
+        setErrorMsg(resBody.message || "Usuário ou senha incorretos.");
       }
     } catch (error) {
       console.error("Erro no login:", error);
@@ -493,7 +494,6 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
         </div>
 
         <div className="bg-card rounded-3xl p-6 border border-border space-y-4">
-          {/* Caixa de Erro Visível */}
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-xl flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -585,7 +585,6 @@ function HomeScreen({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Fixed background orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-32 -right-32 w-64 h-64 bg-primary/15 rounded-full blur-3xl" />
       </div>
@@ -640,7 +639,7 @@ function HomeScreen({
           )}
         </div>
 
-        {/* Recent searches (shown when no query) */}
+        {/* Recent searches */}
         {!query && (
           <div className="mb-6">
             <p className="text-muted-foreground text-xs font-semibold uppercase tracking-widest mb-3">
@@ -821,41 +820,6 @@ function ProductsScreen({
                   <MoreVertical className="w-4 h-4 text-muted-foreground" />
                 </button>
               </button>
-
-              {/* Dropdown menu */}
-              <AnimatePresence>
-                {menuOpen === p.id && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                    className="absolute right-3 top-16 z-20 bg-popover border border-border rounded-2xl shadow-2xl p-1 min-w-36"
-                  >
-                    <button
-                      onClick={() => { onEdit(p); setMenuOpen(null); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm hover:bg-secondary transition-colors text-foreground"
-                    >
-                      <Edit2 className="w-4 h-4 text-muted-foreground" />
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => setMenuOpen(null)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm hover:bg-secondary transition-colors text-foreground"
-                    >
-                      <Eye className="w-4 h-4 text-muted-foreground" />
-                      Detalhes
-                    </button>
-                    <div className="h-px bg-border my-1" />
-                    <button
-                      onClick={() => setMenuOpen(null)}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm hover:bg-red-500/10 transition-colors text-red-400"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Excluir
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           ))}
         </div>
@@ -864,544 +828,4 @@ function ProductsScreen({
   );
 }
 
-function ProductFormScreen({
-  mode,
-  product,
-  onBack,
-  onSave,
-}: {
-  mode: "add" | "edit";
-  product?: Product;
-  onBack: () => void;
-  onSave: () => void;
-}) {
-  const [name, setName] = useState(product?.name || "");
-  const [description, setDescription] = useState(product?.description || "");
-  const [price, setPrice] = useState(product ? String(product.price) : "");
-  const [unit, setUnit] = useState(product?.unit || "Unidade");
-  const [date, setDate] = useState(product?.updatedAt || new Date().toLocaleDateString("pt-BR"));
-  const [saved, setSaved] = useState(false);
-
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => { setSaved(false); onSave(); }, 1200);
-  };
-
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-md mx-auto px-4 pb-28">
-        {/* Header */}
-        <div className="flex items-center gap-4 pt-12 pb-6">
-          <button
-            onClick={onBack}
-            className="w-10 h-10 bg-card border border-border rounded-2xl flex items-center justify-center active:scale-90 transition-transform"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="font-bold text-xl flex-1">
-            {mode === "add" ? "Cadastrar Produto" : "Editar Produto"}
-          </h1>
-        </div>
-
-        {/* Photo upload */}
-        <div className="mb-5">
-          <div
-            className={`relative h-44 rounded-3xl overflow-hidden border-2 border-dashed flex items-center justify-center cursor-pointer transition-all ${
-              product ? "border-transparent" : "border-border hover:border-primary/50"
-            }`}
-          >
-            {product ? (
-              <>
-                <img src={product.image} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2 flex items-center gap-2 text-white text-sm font-semibold">
-                    <Camera className="w-4 h-4" />
-                    Trocar foto
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="text-center">
-                <div className="w-12 h-12 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-2">
-                  <Camera className="w-6 h-6 text-muted-foreground" />
-                </div>
-                <p className="text-sm font-medium text-muted-foreground">Adicionar foto</p>
-                <p className="text-xs text-muted-foreground/60 mt-0.5">Toque para escolher</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Fields */}
-        <div className="space-y-4">
-          {[
-            { label: "Nome do Produto", value: name, setter: setName, placeholder: "Ex: Coca-Cola 2L" },
-            { label: "Descrição", value: description, setter: setDescription, placeholder: "Breve descrição do produto" },
-          ].map(({ label, value, setter, placeholder }) => (
-            <div key={label}>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest block mb-2">
-                {label}
-              </label>
-              <input
-                type="text"
-                value={value}
-                onChange={(e) => setter(e.target.value)}
-                placeholder={placeholder}
-                className="w-full bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/50 transition-all text-base"
-              />
-            </div>
-          ))}
-
-          {/* Price */}
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest block mb-2">
-              Preço
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-lg">R$</span>
-              <input
-                type="number"
-                step="0.01"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0,00"
-                className="w-full bg-card border border-border rounded-xl pl-12 pr-4 py-3.5 text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/50 transition-all text-2xl font-black"
-              />
-            </div>
-          </div>
-
-          {/* Unit */}
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest block mb-2">
-              Tipo de Unidade
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {UNITS.map((u) => (
-                <button
-                  key={u}
-                  onClick={() => setUnit(u)}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all active:scale-95 ${
-                    unit === u
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-card border-border text-muted-foreground"
-                  }`}
-                >
-                  {u}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Date */}
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest block mb-2">
-              Data de Atualização
-            </label>
-            <input
-              type="text"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              placeholder="dd/mm/aaaa"
-              className="w-full bg-card border border-border rounded-xl px-4 py-3.5 text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/50 transition-all text-base"
-            />
-          </div>
-        </div>
-
-        {/* Save button */}
-        <div className="mt-8">
-          <button
-            onClick={handleSave}
-            className={`w-full font-bold text-lg py-4 rounded-2xl active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2 ${
-              mode === "edit"
-                ? "bg-primary text-primary-foreground shadow-primary/30"
-                : "bg-primary text-primary-foreground shadow-primary/30"
-            }`}
-          >
-            {saved ? (
-              <>
-                <CheckCircle className="w-5 h-5" />
-                Salvo!
-              </>
-            ) : (
-              mode === "add" ? "Salvar Produto" : "Atualizar Produto"
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NotificationsScreen({ onBack }: { onBack: () => void }) {
-  const [filter, setFilter] = useState<"all" | "unread">("all");
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
-
-  const visible = filter === "all" ? notifications : notifications.filter((n) => !n.read);
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAllRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-md mx-auto px-4 pb-28">
-        {/* Header */}
-        <div className="flex items-center gap-4 pt-12 pb-6">
-          <button
-            onClick={onBack}
-            className="w-10 h-10 bg-card border border-border rounded-2xl flex items-center justify-center active:scale-90 transition-transform"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex-1">
-            <h1 className="font-bold text-xl">Notificações</h1>
-            {unreadCount > 0 && (
-              <p className="text-muted-foreground text-xs">{unreadCount} não lida{unreadCount !== 1 ? "s" : ""}</p>
-            )}
-          </div>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllRead}
-              className="text-primary text-sm font-semibold active:scale-95 transition-transform"
-            >
-              Marcar tudo
-            </button>
-          )}
-        </div>
-
-        {/* Filter tabs */}
-        <div className="flex gap-2 mb-5">
-          {(["all", "unread"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-                filter === f
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card border border-border text-muted-foreground"
-              }`}
-            >
-              {f === "all" ? "Todas" : "Não lidas"}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-2">
-          {visible.map((n) => (
-            <motion.button
-              key={n.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              onClick={() => setNotifications((prev) => prev.map((x) => x.id === n.id ? { ...x, read: true } : x))}
-              className={`w-full flex items-start gap-3.5 bg-card border rounded-2xl p-4 text-left active:scale-98 transition-all ${
-                !n.read ? "border-primary/30" : "border-border"
-              }`}
-            >
-              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-                !n.read ? "bg-primary/15" : "bg-secondary"
-              }`}>
-                {notifIcon(n.icon)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2 mb-0.5">
-                  <p className="font-semibold text-sm leading-tight">{n.title}</p>
-                  {!n.read && <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5" />}
-                </div>
-                <p className="text-muted-foreground text-xs leading-relaxed">{n.description}</p>
-                <p className="text-muted-foreground/60 text-xs mt-1.5 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {n.date}
-                </p>
-              </div>
-            </motion.button>
-          ))}
-          {visible.length === 0 && (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-secondary rounded-3xl flex items-center justify-center mx-auto mb-4">
-                <Bell className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <p className="font-bold text-lg mb-1">Tudo em dia!</p>
-              <p className="text-muted-foreground text-sm">Nenhuma notificação não lida</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Bottom Navigation ────────────────────────────────────────────────────────
-
-function BottomNav({
-  current,
-  onNav,
-}: {
-  current: Screen;
-  onNav: (s: Screen) => void;
-}) {
-  const items = [
-    { icon: <Home className="w-5 h-5" />, label: "Início", screen: "home" as Screen },
-    { icon: <Search className="w-5 h-5" />, label: "Buscar", screen: "home" as Screen },
-    { icon: <PlusCircle className="w-6 h-6" />, label: "", screen: "add-product" as Screen, fab: true },
-    { icon: <List className="w-5 h-5" />, label: "Produtos", screen: "products" as Screen },
-    { icon: <Bell className="w-5 h-5" />, label: "Avisos", screen: "notifications" as Screen },
-  ];
-
-  const unread = NOTIFICATIONS.filter((n) => !n.read).length;
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 z-30">
-      <div className="max-w-md mx-auto px-4 pb-6">
-        <div className="bg-card border border-border rounded-3xl px-2 py-2 flex items-center justify-around shadow-2xl shadow-black/50">
-          {items.map((item, i) => {
-            const active = current === item.screen && !item.fab;
-            if (item.fab) {
-              return (
-                <button
-                  key={i}
-                  onClick={() => onNav(item.screen)}
-                  className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center active:scale-90 transition-transform shadow-lg shadow-primary/40 -mt-6"
-                >
-                  {item.icon}
-                </button>
-              );
-            }
-            return (
-              <button
-                key={i}
-                onClick={() => onNav(item.screen)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all active:scale-90 relative ${
-                  active ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                <span className="relative">
-                  {item.icon}
-                  {item.screen === "notifications" && unread > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                      {unread}
-                    </span>
-                  )}
-                </span>
-                {item.label && (
-                  <span className="text-[10px] font-semibold">{item.label}</span>
-                )}
-                {active && (
-                  <motion.div
-                    layoutId="bottomNavIndicator"
-                    className="absolute -bottom-0.5 w-4 h-0.5 bg-primary rounded-full"
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Desktop Sidebar ──────────────────────────────────────────────────────────
-
-function DesktopSidebar({ current, onNav }: { current: Screen; onNav: (s: Screen) => void }) {
-  const items: { icon: React.ReactNode; label: string; screen: Screen }[] = [
-    { icon: <Home className="w-5 h-5" />, label: "Início", screen: "home" },
-    { icon: <PlusCircle className="w-5 h-5" />, label: "Cadastrar", screen: "add-product" },
-    { icon: <List className="w-5 h-5" />, label: "Produtos", screen: "products" },
-    { icon: <Bell className="w-5 h-5" />, label: "Notificações", screen: "notifications" },
-  ];
-  const unread = NOTIFICATIONS.filter((n) => !n.read).length;
-
-  return (
-    <div className="w-64 flex-shrink-0 bg-sidebar border-r border-sidebar-border flex flex-col h-screen sticky top-0">
-      {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-            <ShoppingCart className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <p className="font-black text-base leading-none">MercadoApp</p>
-            <p className="text-muted-foreground text-xs mt-0.5">Consulta de preços</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {items.map((item) => {
-          const active = current === item.screen;
-          return (
-            <button
-              key={item.label}
-              onClick={() => onNav(item.screen)}
-              className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all active:scale-95 relative ${
-                active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-              }`}
-            >
-              {item.icon}
-              {item.label}
-              {item.screen === "notifications" && unread > 0 && (
-                <span className="ml-auto bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                  {unread}
-                </span>
-              )}
-              {active && !( item.screen === "notifications" && unread > 0) && (
-                <ChevronRight className="w-4 h-4 ml-auto opacity-50" />
-              )}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* User */}
-      <div className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3 p-2">
-          <img
-            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&auto=format"
-            alt="João"
-            className="w-9 h-9 rounded-full object-cover ring-2 ring-primary"
-          />
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">João Silva</p>
-            <p className="text-muted-foreground text-xs">Funcionário</p>
-          </div>
-          {/* BOTÃO CORRIGIDO AQUI EMBAIXO: */}
-          <button 
-            onClick={() => {
-              localStorage.removeItem("user_session"); // Limpa a sessão do navegador
-              onNav("login");                          // Redireciona para a tela de login
-            }}
-            className="p-1.5 rounded-lg hover:bg-sidebar-accent transition-colors text-muted-foreground hover:text-red-400"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Main App ─────────────────────────────────────────────────────────────────
-
-export default function App() {
-  const [screen, setScreen] = useState<Screen>("login");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
-  const [editProduct, setEditProduct] = useState<Product | undefined>(undefined);
-  const [prevScreen, setPrevScreen] = useState<Screen>("home");
-
-  const navigate = (s: Screen) => {
-    setPrevScreen(screen);
-    setScreen(s);
-  };
-
-  const goBack = () => navigate(prevScreen === screen ? "home" : prevScreen);
-
-  const isLoggedIn = screen !== "login";
-  const showNav = isLoggedIn && screen !== "add-product" && screen !== "edit-product";
-
-  // Apply dark class to html
-  useEffect(() => {
-    document.documentElement.classList.add("dark");
-    document.body.style.fontFamily = "'Poppins', sans-serif";
-  }, []);
-
-  return (
-    <div className="bg-background text-foreground" style={{ fontFamily: "'Poppins', sans-serif" }}>
-      {/* Mobile layout */}
-      <div className="lg:hidden min-h-screen">
-        <AnimatePresence mode="wait">
-          {screen === "login" && (
-            <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <LoginScreen onLogin={() => navigate("home")} />
-            </motion.div>
-          )}
-          {screen === "home" && (
-            <motion.div key="home" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <HomeScreen
-                onOpenMenu={() => setMenuOpen(true)}
-                onShowDetail={(p) => setDetailProduct(p)}
-                onNotifications={() => navigate("notifications")}
-              />
-            </motion.div>
-          )}
-          {screen === "products" && (
-            <motion.div key="products" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <ProductsScreen
-                onBack={goBack}
-                onEdit={(p) => { setEditProduct(p); navigate("edit-product"); }}
-              />
-            </motion.div>
-          )}
-          {screen === "add-product" && (
-            <motion.div key="add-product" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <ProductFormScreen mode="add" onBack={goBack} onSave={() => navigate("products")} />
-            </motion.div>
-          )}
-          {screen === "edit-product" && (
-            <motion.div key="edit-product" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <ProductFormScreen mode="edit" product={editProduct} onBack={goBack} onSave={() => navigate("products")} />
-            </motion.div>
-          )}
-          {screen === "notifications" && (
-            <motion.div key="notifications" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <NotificationsScreen onBack={goBack} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {showNav && <BottomNav current={screen} onNav={navigate} />}
-
-        <SideMenu
-          open={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          onNav={navigate}
-          currentScreen={screen}
-        />
-      </div>
-
-      {/* Desktop layout */}
-      <div className="hidden lg:flex min-h-screen">
-        {isLoggedIn && <DesktopSidebar current={screen} onNav={navigate} />}
-
-        <div className="flex-1 overflow-y-auto">
-          {screen === "login" && <LoginScreen onLogin={() => navigate("home")} />}
-          {screen === "home" && (
-            <HomeScreen
-              onOpenMenu={() => {}}
-              onShowDetail={(p) => setDetailProduct(p)}
-              onNotifications={() => navigate("notifications")}
-            />
-          )}
-          {screen === "products" && (
-            <ProductsScreen
-              onBack={goBack}
-              onEdit={(p) => { setEditProduct(p); navigate("edit-product"); }}
-            />
-          )}
-          {screen === "add-product" && (
-            <ProductFormScreen mode="add" onBack={goBack} onSave={() => navigate("products")} />
-          )}
-          {screen === "edit-product" && (
-            <ProductFormScreen mode="edit" product={editProduct} onBack={goBack} onSave={() => navigate("products")} />
-          )}
-          {screen === "notifications" && <NotificationsScreen onBack={goBack} />}
-        </div>
-      </div>
-
-      {/* Detail modal */}
-      <AnimatePresence>
-        {detailProduct && (
-          <DetailModal
-            product={detailProduct}
-            onClose={() => setDetailProduct(null)}
-            onEdit={() => {
-              setEditProduct(detailProduct);
-              setDetailProduct(null);
-              navigate("edit-product");
-            }}
-          />
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
+export default LoginScreen;

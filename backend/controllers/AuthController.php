@@ -1,5 +1,8 @@
 <?php
 
+// Ajustado para apontar exatamente para a pasta 'models' em minúsculo
+require_once __DIR__ . '/../models/User.php';
+
 class AuthController extends BaseController
 {
     private User $users;
@@ -23,7 +26,6 @@ class AuthController extends BaseController
             ->required('senha', $data['senha'] ?? null);
 
         if ($validator->fails()) {
-
             $this->error(
                 'Dados inválidos.',
                 $validator->errors(),
@@ -36,7 +38,6 @@ class AuthController extends BaseController
         );
 
         if (!$user) {
-
             $this->error(
                 'Usuário ou senha inválidos.',
                 [],
@@ -48,7 +49,6 @@ class AuthController extends BaseController
             $data['senha'],
             $user['senha']
         )) {
-
             $this->error(
                 'Usuário ou senha inválidos.',
                 [],
@@ -82,7 +82,7 @@ class AuthController extends BaseController
     }
 
     /**
-     * Verifica o estado atual da sessão (Auxilia o React no refresh)
+     * Verifica o estado atual da sessão
      */
     public function check(): never
     {
@@ -111,9 +111,7 @@ class AuthController extends BaseController
         $_SESSION = [];
 
         if (ini_get('session.use_cookies')) {
-
             $params = session_get_cookie_params();
-
             setcookie(
                 session_name(),
                 '',
