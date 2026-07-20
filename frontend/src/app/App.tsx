@@ -175,20 +175,10 @@ const NOTIFICATIONS: Notification[] = [
 
 const RECENT_SEARCHES = ["Coca-Cola", "Arroz", "Feijão", "Leite"];
 
-const UNITS = ["Unidade", "Kg", "Litro", "Garrafa", "Caixa", "Pacote", "Lata", "Pote", "Dúzia"];
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-const notifIcon = (type: Notification["icon"]) => {
-  const base = "w-5 h-5";
-  if (type === "alert") return <AlertCircle className={`${base} text-[#ffd600]`} />;
-  if (type === "success") return <CheckCircle className={`${base} text-[#30d158]`} />;
-  if (type === "star") return <Star className={`${base} text-[#ff9f0a]`} />;
-  return <Info className={`${base} text-[#0a84ff]`} />;
-};
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -423,7 +413,7 @@ function SideMenu({
 
 // ─── Screens ──────────────────────────────────────────────────────────────────
 
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
+function LoginScreen({ onLogin }: { onLogin?: () => void }) {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [remember, setRemember] = useState(false);
@@ -460,7 +450,11 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
         if (resBody.data && resBody.data.csrf_token) {
           localStorage.setItem("csrf_token", resBody.data.csrf_token);
         }
-        onLogin();
+        
+        // Chamada segura para evitar o erro "is not a function"
+        if (typeof onLogin === "function") {
+          onLogin();
+        }
       } else {
         setErrorMsg(resBody.message || "Usuário ou senha incorretos.");
       }
@@ -828,4 +822,62 @@ function ProductsScreen({
   );
 }
 
-export default LoginScreen;
+// ─── Componente Raiz (Gerenciador de Estado e Navegação) ─────────────────────
+
+export default function App() {
+  const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
+    return localStorage.getItem("user_session") === "active" ? "home" : "login";
+  });
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  if (currentScreen === "login") {
+    return (
+      <LoginScreen
+        onLogin={() => {
+          setCurrentScreen("home");
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="relative">
+      <SideMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onNav={(screen) => setCurrentScreen(screen)}
+        currentScreen={currentScreen}
+      />
+
+      {currentScreen === "home" && (
+        <HomeScreen
+          onOpenMenu={() => setMenuOpen(true)}
+          onShowDetail={(product) => setSelectedProduct(product)}
+          onNotifications={() => setCurrentScreen("notifications")}
+        />
+      )}
+
+      {currentScreen === "products" && (
+        <ProductsScreen
+          onBack={() => setCurrentScreen("home")}
+          onEdit={(product) => {
+            setSelectedProduct(product);
+            setCurrentScreen("edit-product");
+          }}
+        />
+      )}
+
+      {selectedProduct && (
+        <DetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onEdit={() => {
+            setCurrentScreen("edit-product");
+            setSelectedProduct(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
