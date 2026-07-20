@@ -20,7 +20,7 @@ $router->post('/api/v1/logout', [AuthController::class, 'logout']);
 
 /*
 |--------------------------------------------------------------------------
-| Produtos (Suporta com e sem /api/v1)
+| Produtos (Suporta com e sem /api/v1 e com caminho do arquivo api.php)
 |--------------------------------------------------------------------------
 */
 
@@ -33,12 +33,18 @@ $router->get('/api/v1/produtos', [ProductController::class, 'index']);
 $router->get('/produtos/{id}', [ProductController::class, 'show']);
 $router->get('/api/v1/produtos/{id}', [ProductController::class, 'show']);
 
-// POST Produtos
+// POST Produtos - Variações de caminho aceitas pelo servidor
 $router->post('/produtos', [ProductController::class, 'store']);
 $router->post('/produtos/', [ProductController::class, 'store']);
 $router->post('/api/v1/produtos', [ProductController::class, 'store']);
 $router->post('/api/v1/produtos/', [ProductController::class, 'store']);
+
+// Caminhos diretos via arquivo api.php
+$router->post('/routes/api.php/produtos', [ProductController::class, 'store']);
+$router->post('/routes/api.php/produtos/', [ProductController::class, 'store']);
 $router->post('/backend/routes/api.php/produtos', [ProductController::class, 'store']);
+$router->post('/backend/routes/api.php/produtos/', [ProductController::class, 'store']);
+$router->post('/mercado-express/backend/routes/api.php/produtos', [ProductController::class, 'store']);
 
 // PUT e DELETE Produtos
 $router->put('/produtos/{id}', [ProductController::class, 'update']);
