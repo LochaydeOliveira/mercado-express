@@ -440,15 +440,17 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
     setErrorMsg("");
 
     try {
-      // Faz a chamada real para o seu servidor na HostGator
-      const response = await fetch("https://loxaid.com/mercado-express/backend/login.php", {
+      // Ajustado para o caminho dinâmico que bate certinho nas rotas do Router PHP
+      const url = `${window.location.origin}/mercado-express/backend/api/v1/login`;
+
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          usuario: email, // ajuste para 'email' se o PHP esperar esse nome
-          senha: pass     // ajuste para 'password' se o PHP esperar esse nome
+          usuario: email, 
+          senha: pass     
         }),
       });
 
