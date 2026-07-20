@@ -1,5 +1,11 @@
 <?php
 
+require_once __DIR__ . '/../routes/Router.php';
+require_once __DIR__ . '/../controllers/AuthController.php';
+require_once __DIR__ . '/../controllers/ProductController.php';
+require_once __DIR__ . '/../controllers/NotificationController.php';
+
+// 2. Inicializa o roteador
 $router = new Router();
 
 $router->prefix('/api/v1');
@@ -22,7 +28,7 @@ $router->post(
 
 /*
 |--------------------------------------------------------------------------
-| Produtos (Busca estática primeiro para evitar conflito!)
+| Produtos
 |--------------------------------------------------------------------------
 */
 
