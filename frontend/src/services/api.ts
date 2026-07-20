@@ -1,6 +1,7 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
-const API_URL = 'http://localhost/mercado_express/backend/routes/api.php';
+const BASE_DOMAIN = window.location.origin;
+const API_URL = `${BASE_DOMAIN}/mercado-express/backend/routes/api.php`;
 
 export const api = axios.create({
   baseURL: API_URL,

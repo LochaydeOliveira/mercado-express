@@ -27,6 +27,7 @@ import {
   Star,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { ProductForm } from "./components/ProductForm";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -894,6 +895,25 @@ export default function App() {
           }}
         />
       )}
+
+      {currentScreen === "add-product" && (
+        <ProductForm
+          onBack={() => setCurrentScreen("home")}
+          onSuccess={() => setCurrentScreen("products")}
+        />
+      )}
+
+      {currentScreen === "edit-product" && (
+        <ProductForm
+          productToEdit={selectedProduct as any}
+          onBack={() => setCurrentScreen("products")}
+          onSuccess={() => {
+            setSelectedProduct(null);
+            setCurrentScreen("products");
+          }}
+        />
+      )}
+
 
       {selectedProduct && (
         <DetailModal
