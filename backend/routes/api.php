@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../autoload.php';
 
 $router = new Router();
-$router->prefix('/api/v1');
+//$router->prefix('/api/v1');
 
 /*
 |--------------------------------------------------------------------------
