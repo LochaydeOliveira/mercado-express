@@ -38,6 +38,12 @@ type Screen =
   | "edit-product"
   | "notifications";
 
+interface UserData {
+  id: number;
+  nome: string;
+  usuario: string;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -309,11 +315,15 @@ function SideMenu({
   onClose,
   onNav,
   currentScreen,
+  user,
+  onLogout,
 }: {
   open: boolean;
   onClose: () => void;
   onNav: (s: Screen) => void;
   currentScreen: Screen;
+  user: UserData | null;
+  onLogout: () => void;
 }) {
   const items: { icon: React.ReactNode; label: string; screen: Screen }[] = [
     { icon: <Home className="w-5 h-5" />, label: "Início", screen: "home" },
@@ -342,7 +352,7 @@ function SideMenu({
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
             className="fixed top-0 left-0 bottom-0 z-50 w-72 bg-sidebar flex flex-col"
           >
-            {/* Header */}
+            {/* Header com dados reais */}
             <div className="p-6 border-b border-sidebar-border">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -356,14 +366,12 @@ function SideMenu({
                 </button>
               </div>
               <div className="flex items-center gap-3">
-                <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&auto=format"
-                  alt="João Silva"
-                  className="w-11 h-11 rounded-full object-cover ring-2 ring-primary"
-                />
+                <div className="w-11 h-11 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-lg ring-2 ring-primary">
+                  {user?.nome ? user.nome.charAt(0).toUpperCase() : "U"}
+                </div>
                 <div>
-                  <p className="font-semibold text-sm">João Silva</p>
-                  <p className="text-muted-foreground text-xs">Funcionário</p>
+                  <p className="font-semibold text-sm">{user?.nome || "Usuário"}</p>
+                  <p className="text-muted-foreground text-xs">@{user?.usuario || "admin"}</p>
                 </div>
               </div>
             </div>
@@ -394,8 +402,7 @@ function SideMenu({
             <div className="p-4 border-t border-sidebar-border">
               <button
                 onClick={() => { 
-                  localStorage.removeItem("user_session"); 
-                  onNav("login" as Screen); 
+                  onLogout(); 
                   onClose(); 
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors active:scale-95"
@@ -413,7 +420,7 @@ function SideMenu({
 
 // ─── Screens ──────────────────────────────────────────────────────────────────
 
-function LoginScreen({ onLogin }: { onLogin?: () => void }) {
+function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (userData: UserData) => void }) {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [remember, setRemember] = useState(false);
@@ -447,14 +454,16 @@ function LoginScreen({ onLogin }: { onLogin?: () => void }) {
 
       if (resBody.success === true) {
         localStorage.setItem("user_session", "active");
+        
+        // Salva os dados reais do usuário vindo do backend PHP
+        const fetchedUser: UserData = resBody.data?.usuario || { id: 1, nome: "Usuário", usuario: email };
+        localStorage.setItem("user_data", JSON.stringify(fetchedUser));
+
         if (resBody.data && resBody.data.csrf_token) {
           localStorage.setItem("csrf_token", resBody.data.csrf_token);
         }
         
-        // Chamada segura para evitar o erro "is not a function"
-        if (typeof onLogin === "function") {
-          onLogin();
-        }
+        onLoginSuccess(fetchedUser);
       } else {
         setErrorMsg(resBody.message || "Usuário ou senha incorretos.");
       }
@@ -552,10 +561,12 @@ function LoginScreen({ onLogin }: { onLogin?: () => void }) {
 }
 
 function HomeScreen({
+  user,
   onOpenMenu,
   onShowDetail,
   onNotifications,
 }: {
+  user: UserData | null;
   onOpenMenu: () => void;
   onShowDetail: (p: Product) => void;
   onNotifications: () => void;
@@ -584,19 +595,17 @@ function HomeScreen({
       </div>
 
       <div className="relative max-w-md mx-auto px-4 pb-28">
-        {/* Header */}
+        {/* Header com dados dinâmicos do banco */}
         <div className="flex items-center justify-between pt-12 pb-6">
           <div className="flex items-center gap-3">
             <button onClick={onOpenMenu} className="active:scale-90 transition-transform">
-              <img
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&auto=format"
-                alt="João"
-                className="w-11 h-11 rounded-full object-cover ring-2 ring-primary"
-              />
+              <div className="w-11 h-11 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-lg ring-2 ring-primary">
+                {user?.nome ? user.nome.charAt(0).toUpperCase() : "U"}
+              </div>
             </button>
             <div>
               <p className="text-muted-foreground text-sm">Bem-vindo de volta 👋</p>
-              <p className="font-bold text-xl leading-tight">Olá, João</p>
+              <p className="font-bold text-xl leading-tight">Olá, {user?.nome || "Usuário"}</p>
             </div>
           </div>
           <button
@@ -831,10 +840,25 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+  // Lê do localStorage os dados reais salvos durante o login
+  const [user, setUser] = useState<UserData | null>(() => {
+    const saved = localStorage.getItem("user_data");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const handleLogout = () => {
+    localStorage.removeItem("user_session");
+    localStorage.removeItem("user_data");
+    localStorage.removeItem("csrf_token");
+    setUser(null);
+    setCurrentScreen("login");
+  };
+
   if (currentScreen === "login") {
     return (
       <LoginScreen
-        onLogin={() => {
+        onLoginSuccess={(userData) => {
+          setUser(userData);
           setCurrentScreen("home");
         }}
       />
@@ -848,10 +872,13 @@ export default function App() {
         onClose={() => setMenuOpen(false)}
         onNav={(screen) => setCurrentScreen(screen)}
         currentScreen={currentScreen}
+        user={user}
+        onLogout={handleLogout}
       />
 
       {currentScreen === "home" && (
         <HomeScreen
+          user={user}
           onOpenMenu={() => setMenuOpen(true)}
           onShowDetail={(product) => setSelectedProduct(product)}
           onNotifications={() => setCurrentScreen("notifications")}
